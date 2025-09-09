@@ -51,41 +51,23 @@ async def list_models(current_user: dict = Depends(get_current_user)):
     try:
         response = ollama.list()
         
-        # Handle the named tuple response structure: ('models', [Model objects])
-        models_data = None
-        if isinstance(response, tuple) and len(response) == 2 and response[0] == 'models':
-            # Extract the models list from the named tuple
-            models_data = response[1]
-        elif isinstance(response, tuple):
-            # If it's a tuple, try the second element which should be the list
-            models_data = response[1] if len(response) > 1 else response[0] if response else []
+        # Handle the ListResponse object - access models attribute directly
+        if hasattr(response, 'models'):
+            models_data = response.models
         elif isinstance(response, list):
             models_data = response
         elif isinstance(response, dict) and 'models' in response:
             models_data = response['models']
         else:
-            models_data = response
+            models_data = []
             
         models_list = []
         for model in models_data:
-            
             # Handle the actual Model object structure
-            if hasattr(model, 'model'):
-                name = model.model
-                size = model.size
-                digest = model.digest
-                modified_at = model.modified_at.isoformat() if model.modified_at else ''
-            elif isinstance(model, dict):
-                name = model.get('model') or model.get('name', 'unknown')
-                size = model.get('size', 0)
-                digest = model.get('digest', '')
-                modified_at = str(model.get('modified_at', ''))
-            else:
-                # Fallback for unknown structure
-                name = str(model)
-                size = 0
-                digest = ''
-                modified_at = ''
+            name = model.model
+            size = model.size
+            digest = model.digest
+            modified_at = model.modified_at.isoformat() if model.modified_at else ''
             
             models_list.append(
                 ModelInfo(
