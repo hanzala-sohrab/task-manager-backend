@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import ollama
+import json
 from app.config import settings
 from app.auth import get_current_user
 
@@ -100,10 +102,63 @@ async def chat_completion(
             {"role": msg.role, "content": msg.content} for msg in request.messages
         ]
 
+        if request.stream:
+            def stream_chat():
+                try:
+                    for chunk in ollama.chat(
+                        model=model,
+                        messages=messages,
+                        stream=True,
+                        options=(
+                            {
+                                "temperature": request.temperature,
+                                "num_predict": request.max_tokens,
+                            }
+                            if request.max_tokens
+                            else {"temperature": request.temperature}
+                        ),
+                    ):
+                        # Extract the serializable data from the ChatResponse object
+                        chunk_data = {
+                            "message": {
+                                "role": chunk.get("message", {}).get("role", "assistant"),
+                                "content": chunk.get("message", {}).get("content", "")
+                            },
+                            "model": chunk.get("model", model),
+                            "done": chunk.get("done", False)
+                        }
+                        
+                        # Add timing info if available
+                        if "total_duration" in chunk:
+                            chunk_data["total_duration"] = chunk["total_duration"]
+                        if "load_duration" in chunk:
+                            chunk_data["load_duration"] = chunk["load_duration"]
+                        if "prompt_eval_count" in chunk:
+                            chunk_data["prompt_eval_count"] = chunk["prompt_eval_count"]
+                        if "eval_count" in chunk:
+                            chunk_data["eval_count"] = chunk["eval_count"]
+                            
+                        yield f"data: {json.dumps(chunk_data)}\n\n"
+                        
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                finally:
+                    yield "data: [DONE]\n\n"
+
+            return StreamingResponse(
+                stream_chat(), 
+                media_type="text/plain",
+                headers={
+                    "Cache-Control": "no-cache", 
+                    "Connection": "keep-alive",
+                    "Content-Type": "text/plain; charset=utf-8"
+                }
+            )
+
         response = ollama.chat(
             model=model,
             messages=messages,
-            stream=request.stream,
+            stream=False,
             options=(
                 {
                     "temperature": request.temperature,
