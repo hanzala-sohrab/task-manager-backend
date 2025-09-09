@@ -52,25 +52,25 @@ async def list_models(current_user: dict = Depends(get_current_user)):
     """List available Ollama models"""
     try:
         response = ollama.list()
-        
+
         # Handle the ListResponse object - access models attribute directly
-        if hasattr(response, 'models'):
+        if hasattr(response, "models"):
             models_data = response.models
         elif isinstance(response, list):
             models_data = response
-        elif isinstance(response, dict) and 'models' in response:
-            models_data = response['models']
+        elif isinstance(response, dict) and "models" in response:
+            models_data = response["models"]
         else:
             models_data = []
-            
+
         models_list = []
         for model in models_data:
             # Handle the actual Model object structure
             name = model.model
             size = model.size
             digest = model.digest
-            modified_at = model.modified_at.isoformat() if model.modified_at else ''
-            
+            modified_at = model.modified_at.isoformat() if model.modified_at else ""
+
             models_list.append(
                 ModelInfo(
                     name=name,
@@ -79,12 +79,13 @@ async def list_models(current_user: dict = Depends(get_current_user)):
                     modified_at=modified_at,
                 )
             )
-        
+
         return models_list
-        
+
     except Exception as e:
         print(f"Error listing models: {e}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to list models: {str(e)}")
 
@@ -103,6 +104,7 @@ async def chat_completion(
         ]
 
         if request.stream:
+
             def stream_chat():
                 try:
                     for chunk in ollama.chat(
@@ -121,13 +123,15 @@ async def chat_completion(
                         # Extract the serializable data from the ChatResponse object
                         chunk_data = {
                             "message": {
-                                "role": chunk.get("message", {}).get("role", "assistant"),
-                                "content": chunk.get("message", {}).get("content", "")
+                                "role": chunk.get("message", {}).get(
+                                    "role", "assistant"
+                                ),
+                                "content": chunk.get("message", {}).get("content", ""),
                             },
                             "model": chunk.get("model", model),
-                            "done": chunk.get("done", False)
+                            "done": chunk.get("done", False),
                         }
-                        
+
                         # Add timing info if available
                         if "total_duration" in chunk:
                             chunk_data["total_duration"] = chunk["total_duration"]
@@ -137,22 +141,22 @@ async def chat_completion(
                             chunk_data["prompt_eval_count"] = chunk["prompt_eval_count"]
                         if "eval_count" in chunk:
                             chunk_data["eval_count"] = chunk["eval_count"]
-                            
+
                         yield f"data: {json.dumps(chunk_data)}\n\n"
-                        
+
                 except Exception as e:
                     yield f"data: {json.dumps({'error': str(e)})}\n\n"
                 finally:
                     yield "data: [DONE]\n\n"
 
             return StreamingResponse(
-                stream_chat(), 
+                stream_chat(),
                 media_type="text/plain",
                 headers={
-                    "Cache-Control": "no-cache", 
+                    "Cache-Control": "no-cache",
                     "Connection": "keep-alive",
-                    "Content-Type": "text/plain; charset=utf-8"
-                }
+                    "Content-Type": "text/plain; charset=utf-8",
+                },
             )
 
         response = ollama.chat(
