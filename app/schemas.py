@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class UserCreate(BaseModel):
@@ -28,6 +29,34 @@ class ItemOut(BaseModel):
     id: int
     title: str
     description: str
+
+    class Config:
+        orm_mode = True
+
+
+class TaskCreate(BaseModel):
+    title: str
+    description: str
+    status: str
+    user_id: int
+    start_date: datetime
+    end_date: datetime
+    jira_link: str
+    created_by: int
+    pull_requests_links: str
+
+
+class TaskOut(BaseModel):
+    id: int
+    title: str
+    description: str
+    status: str
+    user_id: int
+    start_date: datetime
+    end_date: datetime
+    jira_link: str
+    created_by: int
+    pull_requests_links: str
 
     class Config:
         orm_mode = True
