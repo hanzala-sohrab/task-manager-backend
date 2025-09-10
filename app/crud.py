@@ -1,6 +1,7 @@
 from app.models import Item
 from sqlalchemy.orm import Session
 
+
 def create_item(db: Session, title: str, description: str):
     db_item = Item(title=title, description=description)
     db.add(db_item)
@@ -8,8 +9,10 @@ def create_item(db: Session, title: str, description: str):
     db.refresh(db_item)
     return db_item
 
+
 def get_items(db: Session):
     return db.query(Item).all()
+
 
 def update_item(db: Session, item_id: int, title: str, description: str):
     db_item = db.query(Item).filter(Item.id == item_id).first()
@@ -19,6 +22,7 @@ def update_item(db: Session, item_id: int, title: str, description: str):
         db.commit()
         db.refresh(db_item)
     return db_item
+
 
 def delete_item(db: Session, item_id: int):
     db_item = db.query(Item).filter(Item.id == item_id).first()
