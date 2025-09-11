@@ -63,7 +63,7 @@ def create_task(db: Session, title: str, description: str, status: str, user_id:
 
 
 def get_tasks(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Task).offset(skip).limit(limit).all()
+    return db.query(Task.id, Task.title, Task.description, Task.status, Task.user_id, Task.start_date, Task.end_date, Task.jira_link, Task.created_by, Task.pull_requests_links, User.username).join(User, Task.user_id == User.id).offset(skip).limit(limit).all()
 
 
 def get_task(db: Session, task_id: int):
