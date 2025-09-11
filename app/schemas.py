@@ -12,7 +12,7 @@ class UserOut(BaseModel):
     username: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Token(BaseModel):
@@ -31,7 +31,7 @@ class ItemOut(BaseModel):
     description: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TaskCreate(BaseModel):
@@ -60,4 +60,4 @@ class TaskOut(BaseModel):
     username: str = ''
 
     class Config:
-        orm_mode = True
+        from_attributes = True
