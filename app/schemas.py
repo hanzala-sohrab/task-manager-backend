@@ -57,7 +57,7 @@ class TaskOut(BaseModel):
     jira_link: str
     created_by: int
     pull_requests_links: str
-    username: str
+    username: str = ''
 
     class Config:
         orm_mode = True
