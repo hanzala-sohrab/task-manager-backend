@@ -44,6 +44,7 @@ class TaskCreate(BaseModel):
     jira_link: str
     created_by: int
     pull_requests_links: str
+    priority: str
 
 
 class TaskOut(BaseModel):
@@ -57,6 +58,7 @@ class TaskOut(BaseModel):
     jira_link: str
     created_by: int
     pull_requests_links: str
+    priority: str
     username: str = ''
 
     class Config:

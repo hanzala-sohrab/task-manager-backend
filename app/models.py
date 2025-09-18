@@ -23,6 +23,7 @@ class Task(Base):
     title = Column(String, index=True)
     description = Column(String)
     status = Column(String)
+    priority = Column(String, default="medium")
     user_id = Column(Integer, ForeignKey("users.id"))
     start_date = Column(DateTime)
     end_date = Column(DateTime)

@@ -34,17 +34,31 @@ def delete_item(db: Session, item_id: int):
     return db_item
 
 
-def create_task(db: Session, title: str, description: str, status: str, user_id: int, 
-                start_date: datetime, end_date: datetime, jira_link: str, 
-                created_by: int, pull_requests_links: str):
+def create_task(
+    db: Session,
+    title: str,
+    description: str,
+    status: str,
+    user_id: int,
+    start_date: datetime,
+    end_date: datetime,
+    jira_link: str,
+    created_by: int,
+    pull_requests_links: str,
+    priority: str,
+):
     # Validate that user_id exists
     if user_id and not db.query(User).filter(User.id == user_id).first():
-        raise HTTPException(status_code=400, detail=f"User with id {user_id} does not exist")
-    
+        raise HTTPException(
+            status_code=400, detail=f"User with id {user_id} does not exist"
+        )
+
     # Validate that created_by exists
     if created_by and not db.query(User).filter(User.id == created_by).first():
-        raise HTTPException(status_code=400, detail=f"User with id {created_by} does not exist")
-    
+        raise HTTPException(
+            status_code=400, detail=f"User with id {created_by} does not exist"
+        )
+
     db_task = Task(
         title=title,
         description=description,
@@ -54,7 +68,8 @@ def create_task(db: Session, title: str, description: str, status: str, user_id:
         end_date=end_date,
         jira_link=jira_link,
         created_by=created_by,
-        pull_requests_links=pull_requests_links
+        pull_requests_links=pull_requests_links,
+        priority=priority,
     )
     db.add(db_task)
     db.commit()
@@ -63,7 +78,26 @@ def create_task(db: Session, title: str, description: str, status: str, user_id:
 
 
 def get_tasks(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Task.id, Task.title, Task.description, Task.status, Task.user_id, Task.start_date, Task.end_date, Task.jira_link, Task.created_by, Task.pull_requests_links, User.username).join(User, Task.user_id == User.id).offset(skip).limit(limit).all()
+    return (
+        db.query(
+            Task.id,
+            Task.title,
+            Task.description,
+            Task.status,
+            Task.user_id,
+            Task.start_date,
+            Task.end_date,
+            Task.jira_link,
+            Task.created_by,
+            Task.pull_requests_links,
+            Task.priority,
+            User.username,
+        )
+        .join(User, Task.user_id == User.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_task(db: Session, task_id: int):
@@ -71,17 +105,27 @@ def get_task(db: Session, task_id: int):
 
 
 def get_tasks_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
-    return db.query(Task).filter(Task.user_id == user_id).offset(skip).limit(limit).all()
+    return (
+        db.query(Task).filter(Task.user_id == user_id).offset(skip).limit(limit).all()
+    )
 
 
 def get_tasks_by_status(db: Session, status: str, skip: int = 0, limit: int = 100):
     return db.query(Task).filter(Task.status == status).offset(skip).limit(limit).all()
 
 
-def update_task(db: Session, task_id: int, title: str = None, description: str = None,
-                status: str = None, user_id: int = None, start_date: datetime = None,
-                end_date: datetime = None, jira_link: str = None, 
-                pull_requests_links: str = None):
+def update_task(
+    db: Session,
+    task_id: int,
+    title: str = None,
+    description: str = None,
+    status: str = None,
+    user_id: int = None,
+    start_date: datetime = None,
+    end_date: datetime = None,
+    jira_link: str = None,
+    pull_requests_links: str = None,
+):
     db_task = db.query(Task).filter(Task.id == task_id).first()
     if db_task:
         if title is not None:

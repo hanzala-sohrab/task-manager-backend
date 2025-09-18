@@ -34,6 +34,7 @@ def create_new_task(
         jira_link=task.jira_link,
         created_by=task.created_by,
         pull_requests_links=task.pull_requests_links,
+        priority=task.priority,
     )
 
 
