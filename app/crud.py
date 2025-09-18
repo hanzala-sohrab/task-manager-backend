@@ -124,6 +124,10 @@ def get_tasks_by_status(db: Session, status: str, skip: int = 0, limit: int = 10
     return db.query(Task).filter(Task.status == status).offset(skip).limit(limit).all()
 
 
+def get_tasks_by_date(db: Session, start_date: datetime, end_date: datetime, skip: int = 0, limit: int = 100):
+    return db.query(Task).filter(Task.start_date >= start_date, Task.end_date <= end_date).offset(skip).limit(limit).all()
+
+
 def update_task(
     db: Session,
     task_id: int,
