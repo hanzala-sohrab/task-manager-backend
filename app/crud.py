@@ -2,6 +2,7 @@ from app.models import Item, Task, User
 from sqlalchemy.orm import Session
 from datetime import datetime
 from fastapi import HTTPException
+from sqlalchemy import case
 
 
 def create_item(db: Session, title: str, description: str):
@@ -94,6 +95,15 @@ def get_tasks(db: Session, skip: int = 0, limit: int = 100):
             User.username,
         )
         .join(User, Task.user_id == User.id)
+        .order_by(
+            # Custom ordering for priority: high -> medium -> low
+            case(
+                (Task.priority == "high", 1),
+                (Task.priority == "medium", 2),
+                (Task.priority == "low", 3),
+                else_=4,
+            )
+        )
         .offset(skip)
         .limit(limit)
         .all()
