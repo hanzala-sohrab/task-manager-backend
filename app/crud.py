@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy import case
+from sentence_transformers import SentenceTransformer
+from app.database import collection
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def create_item(db: Session, title: str, description: str):
@@ -75,6 +79,16 @@ def create_task(
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
+
+    # Generate and store the embedding for the task description
+    embedding = model.encode(description)
+
+    collection.add(
+        ids=db_task.id,
+        embeddings=embedding,
+        metadatas=[{"task_id": db_task.id, "title": title, "description": description}],
+    )
+
     return db_task
 
 
@@ -124,8 +138,20 @@ def get_tasks_by_status(db: Session, status: str, skip: int = 0, limit: int = 10
     return db.query(Task).filter(Task.status == status).offset(skip).limit(limit).all()
 
 
-def get_tasks_by_date(db: Session, start_date: datetime, end_date: datetime, skip: int = 0, limit: int = 100):
-    return db.query(Task).filter(Task.start_date >= start_date, Task.end_date <= end_date).offset(skip).limit(limit).all()
+def get_tasks_by_date(
+    db: Session,
+    start_date: datetime,
+    end_date: datetime,
+    skip: int = 0,
+    limit: int = 100,
+):
+    return (
+        db.query(Task)
+        .filter(Task.start_date >= start_date, Task.end_date <= end_date)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def update_task(
@@ -160,6 +186,18 @@ def update_task(
             db_task.pull_requests_links = pull_requests_links
         db.commit()
         db.refresh(db_task)
+
+        # Generate and store the embedding for the task description
+        embedding = model.encode([f'{title} {description}'])[0]
+
+        collection.add(
+            ids=[str(db_task.id)],
+            embeddings=[embedding],
+            metadatas=[
+                {"text": f'{title} {description}'}
+            ],
+        )
+
     return db_task
 
 
@@ -169,3 +207,34 @@ def delete_task(db: Session, task_id: int):
         db.delete(db_task)
         db.commit()
     return db_task
+
+
+def search_tasks(db: Session, query: str, top_k: int = 5):
+    # Generate the embedding for the query
+    query_embedding = model.encode([query])[0]
+
+    # Perform the similarity search in the vector database
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=top_k,
+    )
+
+    print(results)
+    # TODO: Fix this
+
+    return []
+
+    task_ids = [int(result["id"]) for result in results["results"][0]["matches"]]
+
+    if not task_ids:
+        return []
+
+    # Retrieve the corresponding tasks from the relational database
+    tasks = (
+        db.query(Task)
+        .filter(Task.id.in_(task_ids))
+        .order_by(case(*[(Task.id == id, index) for index, id in enumerate(task_ids)]))
+        .all()
+    )
+
+    return tasks

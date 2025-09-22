@@ -11,6 +11,7 @@ from app.crud import (
     get_tasks_by_status,
     update_task,
     delete_task,
+    search_tasks,
 )
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -175,3 +176,17 @@ def delete_existing_task(
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
     return {"msg": "Task deleted successfully"}
+
+
+@router.get("/search/")
+def search(
+    query: str,
+    skip: int = Query(0, ge=0, description="Number of tasks to skip"),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Maximum number of tasks to return"
+    ),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Search tasks by title or description"""
+    return search_tasks(query=query, db=db)

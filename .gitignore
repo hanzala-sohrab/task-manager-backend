@@ -12,3 +12,4 @@
 
 # Ignore the db file
 *.db
+chroma/
