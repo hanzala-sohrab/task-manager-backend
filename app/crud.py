@@ -81,11 +81,11 @@ def create_task(
     db.refresh(db_task)
 
     # Generate and store the embedding for the task description
-    embedding = model.encode(description)
+    embeddings = model.encode(description)
 
     collection.add(
-        ids=db_task.id,
-        embeddings=embedding,
+        ids=[str(db_task.id)],
+        embeddings=embeddings,
         metadatas=[{"task_id": db_task.id, "title": title, "description": description}],
     )
 
@@ -188,14 +188,12 @@ def update_task(
         db.refresh(db_task)
 
         # Generate and store the embedding for the task description
-        embedding = model.encode([f'{title} {description}'])[0]
+        embedding = model.encode([f"{title} {description}"])[0]
 
         collection.add(
             ids=[str(db_task.id)],
             embeddings=[embedding],
-            metadatas=[
-                {"text": f'{title} {description}'}
-            ],
+            metadatas=[{"text": f"{title} {description}"}],
         )
 
     return db_task
@@ -219,12 +217,17 @@ def search_tasks(db: Session, query: str, top_k: int = 5):
         n_results=top_k,
     )
 
-    print(results)
-    # TODO: Fix this
+    # Destructure
+    ids = results["ids"][0]
+    # metadatas = [m["text"] for m in results["metadatas"][0]]
+    distances = results["distances"][0]
 
-    return []
+    matching_task_ids = []
+    for i in range(len(ids)):
+        if round(distances[i]) <= 1:  # Adjust threshold as needed
+            matching_task_ids.append(ids[i])
 
-    task_ids = [int(result["id"]) for result in results["results"][0]["matches"]]
+    task_ids = [int(id) for id in matching_task_ids]
 
     if not task_ids:
         return []
