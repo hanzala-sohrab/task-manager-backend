@@ -33,8 +33,6 @@ async def add_cache_headers(request: Request, call_next):
     async for chunk in response.body_iterator:
         body += chunk
 
-    print("Response body:", body)
-
     # Create a fresh Response with captured body
     new_response = Response(
         content=body,
