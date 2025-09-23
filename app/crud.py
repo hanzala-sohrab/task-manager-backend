@@ -222,12 +222,8 @@ def search_tasks(db: Session, query: str, top_k: int = 5):
     # metadatas = [m["text"] for m in results["metadatas"][0]]
     distances = results["distances"][0]
 
-    matching_task_ids = []
-    for i in range(len(ids)):
-        if round(distances[i]) <= 1:  # Adjust threshold as needed
-            matching_task_ids.append(ids[i])
-
-    task_ids = [int(id) for id in matching_task_ids]
+    THRESHOLD = 1 # Adjust threshold as needed
+    task_ids = [int(ids[i]) for i in range(len(distances)) if round(distances[i]) <= THRESHOLD] 
 
     if not task_ids:
         return []
