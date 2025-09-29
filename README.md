@@ -1,12 +1,12 @@
 # Task Manager Backend
 
-A comprehensive FastAPI-based backend application for task management with user authentication, CRUD operations, and integrated LLM capabilities using Ollama.
+A comprehensive FastAPI-based backend application for task management with user authentication, CRUD operations, and vector search capabilities.
 
 ## Features
 
 - **Task Management**: Full CRUD operations for tasks with advanced filtering and pagination
 - **User Authentication**: JWT-based authentication system with secure password handling
-- **LLM Integration**: Built-in Ollama integration for AI-powered task assistance and chat completion
+- **Vector Search**: AI-powered task search using sentence embeddings and ChromaDB
 - **Database**: SQLAlchemy ORM with Alembic for database migrations
 - **RESTful API**: Well-structured API endpoints with proper documentation
 - **CORS Support**: Configured for cross-origin requests from frontend applications
@@ -17,7 +17,7 @@ A comprehensive FastAPI-based backend application for task management with user 
 - **Database**: SQLite (configurable to other databases)
 - **ORM**: SQLAlchemy
 - **Authentication**: JWT tokens with bcrypt password hashing
-- **LLM**: Ollama integration
+- **Vector Search**: ChromaDB with sentence-transformers
 - **Migrations**: Alembic
 - **Python**: 3.8+
 
@@ -26,7 +26,6 @@ A comprehensive FastAPI-based backend application for task management with user 
 ### Prerequisites
 
 - Python 3.8 or higher
-- Ollama installed and running (for LLM features)
 
 ### Installation
 
@@ -79,7 +78,6 @@ The API endpoints are organized into the following tags for better navigation an
 - **`users`**: User authentication and management endpoints
 - **`items`**: General item management endpoints
 - **`tasks`**: Task management and CRUD operations
-- **`llm`**: LLM integration and AI-powered features
 
 ### Key Endpoints
 
@@ -95,6 +93,7 @@ The API endpoints are organized into the following tags for better navigation an
 - `DELETE /tasks/{task_id}` - Delete a task
 - `GET /tasks/user/{user_id}` - Get tasks by user
 - `GET /tasks/status/{status}` - Get tasks by status
+- `GET /tasks/search/` - **Vector search tasks by title or description**
 
 #### Items (`items` tag)
 - `POST /items/` - Create a new item
@@ -103,12 +102,28 @@ The API endpoints are organized into the following tags for better navigation an
 - `PUT /items/{item_id}` - Update an item
 - `DELETE /items/{item_id}` - Delete an item
 
-#### LLM Integration (`llm` tag)
-- `POST /llm/chat` - Chat completion with Ollama
-- `POST /llm/completion` - Text completion with Ollama
-- `GET /llm/models` - List available Ollama models
-- `POST /llm/models/pull` - Pull a new model
-- `DELETE /llm/models/{model_name}` - Delete a model
+## Vector Search
+
+The application now includes vector search capabilities for tasks using:
+
+- **ChromaDB**: Vector database for storing and searching task embeddings
+- **sentence-transformers**: Pre-trained models for generating text embeddings
+- **all-MiniLM-L6-v2**: Default model for encoding task descriptions and queries
+
+### How Vector Search Works
+
+1. When tasks are created, their titles and descriptions are encoded into vector embeddings
+2. These embeddings are stored in ChromaDB for efficient similarity search
+3. When searching, the query is also encoded and compared against stored embeddings
+4. Results are ranked by semantic similarity, providing more relevant matches than traditional text search
+
+### Search Endpoint
+
+```bash
+GET /tasks/search/?query=your_search_query
+```
+
+The search endpoint accepts a query parameter and returns tasks ranked by semantic similarity to the search query.
 
 ## Project Structure
 
@@ -122,13 +137,12 @@ task-manager-backend/
 ├── app/
 │   ├── routers/          # API route modules
 │   │   ├── items.py      # Item-related endpoints
-│   │   ├── llm.py        # LLM integration endpoints
 │   │   ├── tasks.py      # Task management endpoints
 │   │   └── users.py      # User authentication endpoints
 │   ├── auth.py           # Authentication utilities
 │   ├── config.py         # Application configuration
 │   ├── crud.py           # Database CRUD operations
-│   ├── database.py       # Database connection setup
+│   ├── database.py       # Database connection and vector DB setup
 │   ├── main.py           # FastAPI application entry point
 │   ├── models.py         # SQLAlchemy database models
 │   └── schemas.py        # Pydantic schemas for request/response
@@ -143,9 +157,6 @@ The application can be configured through environment variables. Key configurati
 
 - `DATABASE_URL`: Database connection string (default: `sqlite:///./test.db`)
 - `SECRET_KEY`: JWT secret key (default: `CHANGE_THIS` - change in production!)
-- `OLLAMA_HOST`: Ollama server host (default: `http://localhost:11434`)
-- `OLLAMA_MODEL`: Default Ollama model (default: `llama3.2`)
-- `OLLAMA_TIMEOUT`: Ollama request timeout in seconds (default: `30`)
 
 ## Database Migrations
 
