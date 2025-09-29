@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Response
 from app.database import Base, engine
-from app.routers import users, items, llm, tasks
+from app.routers import users, items, tasks
 from fastapi.middleware.cors import CORSMiddleware
 import hashlib
 
@@ -58,5 +58,5 @@ async def add_cache_headers(request: Request, call_next):
 
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(items.router, prefix="/items", tags=["items"])
-app.include_router(llm.router, prefix="/llm", tags=["llm"])
+# app.include_router(llm.router, prefix="/llm", tags=["llm"])
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
