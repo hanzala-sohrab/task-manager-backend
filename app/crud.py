@@ -165,6 +165,7 @@ def update_task(
     end_date: datetime = None,
     jira_link: str = None,
     pull_requests_links: str = None,
+    priority: str = None,
 ):
     db_task = db.query(Task).filter(Task.id == task_id).first()
     if db_task:
@@ -184,6 +185,8 @@ def update_task(
             db_task.jira_link = jira_link
         if pull_requests_links is not None:
             db_task.pull_requests_links = pull_requests_links
+        if priority is not None:
+            db_task.priority = priority
         db.commit()
         db.refresh(db_task)
 
