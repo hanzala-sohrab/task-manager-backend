@@ -131,6 +131,7 @@ def update_existing_task(
         end_date=task.end_date,
         jira_link=task.jira_link,
         pull_requests_links=task.pull_requests_links,
+        priority=task.priority,
     )
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
