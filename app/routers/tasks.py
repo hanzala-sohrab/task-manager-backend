@@ -58,8 +58,6 @@ def check_task_overdue(task_row: TaskOut) -> TaskOut:
         "username": task_row.username,
     }
 
-    print("Foobar: ", task_row.status)
-
     # Check if task is overdue and update status if needed
     if (
         task_row.end_date.date() < datetime.date.today()
