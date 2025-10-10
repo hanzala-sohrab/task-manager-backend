@@ -1,3 +1,4 @@
+from typing import List
 from app.models import Item, Task, User
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -5,6 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import case
 from sentence_transformers import SentenceTransformer
 from app.database import collection
+from app.schemas import TaskOut
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -92,7 +94,7 @@ def create_task(
     return db_task
 
 
-def get_tasks(db: Session, skip: int = 0, limit: int = 100):
+def get_tasks(db: Session, skip: int = 0, limit: int = 100) -> List[TaskOut]:
     return (
         db.query(
             Task.id,

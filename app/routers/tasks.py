@@ -1,6 +1,6 @@
 import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
-from app.schemas import TaskCreate, TaskOut
+from app.schemas import TaskCreate, TaskOut, TaskStatus
 from app.auth import get_db, get_current_user
 from app.crud import (
     create_task,
@@ -41,6 +41,35 @@ def create_new_task(
     )
 
 
+def check_task_overdue(task_row: TaskOut) -> TaskOut:
+    # Convert the SQLAlchemy Row to a TaskOut model
+    task_dict = {
+        "id": task_row.id,
+        "title": task_row.title,
+        "description": task_row.description,
+        "status": task_row.status,
+        "user_id": task_row.user_id,
+        "start_date": task_row.start_date,
+        "end_date": task_row.end_date,
+        "jira_link": task_row.jira_link,
+        "created_by": task_row.created_by,
+        "pull_requests_links": task_row.pull_requests_links,
+        "priority": task_row.priority,
+        "username": task_row.username,
+    }
+
+    print("Foobar: ", task_row.status)
+
+    # Check if task is overdue and update status if needed
+    if (
+        task_row.end_date.date() < datetime.date.today()
+        and task_row.status != TaskStatus.COMPLETED.value
+    ):
+        task_dict["status"] = TaskStatus.OVERDUE
+
+    return TaskOut(**task_dict)
+
+
 @router.get("/", response_model=List[TaskOut])
 def read_tasks(
     skip: int = Query(0, ge=0, description="Number of tasks to skip"),
@@ -51,7 +80,7 @@ def read_tasks(
     current_user=Depends(get_current_user),
 ):
     """Get all tasks with pagination"""
-    return get_tasks(db, skip=skip, limit=limit)
+    return map(check_task_overdue, get_tasks(db, skip=skip, limit=limit))
 
 
 @router.get("/{task_id}", response_model=TaskOut)

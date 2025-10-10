@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -47,11 +48,18 @@ class TaskCreate(BaseModel):
     priority: str
 
 
+class TaskStatus(Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    OVERDUE = "overdue"
+
+
 class TaskOut(BaseModel):
     id: int
     title: str
     description: str
-    status: str
+    status: TaskStatus
     user_id: int
     start_date: datetime
     end_date: datetime
