@@ -8,7 +8,14 @@ from sentence_transformers import SentenceTransformer
 from app.database import collection
 from app.schemas import TaskOut
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# Lazy loading for the model to avoid blocking startup
+_model = None
+
+def get_model() -> SentenceTransformer:
+    global _model
+    if _model is None:
+        _model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _model
 
 
 def create_item(db: Session, title: str, description: str):
@@ -83,9 +90,10 @@ def create_task(
     db.refresh(db_task)
 
     # Generate and store the embedding for the task description
+    model = get_model()
     embeddings = model.encode(description)
 
-    collection.add(
+    collection().add(
         ids=[str(db_task.id)],
         embeddings=embeddings,
         metadatas=[{"task_id": db_task.id, "title": title, "description": description}],
@@ -193,9 +201,10 @@ def update_task(
         db.refresh(db_task)
 
         # Generate and store the embedding for the task description
+        model = get_model()
         embedding = model.encode([f"{title} {description}"])[0]
 
-        collection.add(
+        collection().add(
             ids=[str(db_task.id)],
             embeddings=[embedding],
             metadatas=[{"text": f"{title} {description}"}],
@@ -217,10 +226,11 @@ def search_tasks(db: Session, query: str, top_k: int = 5):
         return db.query(Task).all()
 
     # Generate the embedding for the query
+    model = get_model()
     query_embedding = model.encode([query])[0]
 
     # Perform the similarity search in the vector database
-    results = collection.query(
+    results = collection().query(
         query_embeddings=[query_embedding],
         n_results=top_k,
     )
