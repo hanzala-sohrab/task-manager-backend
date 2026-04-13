@@ -112,6 +112,9 @@ def get_tasks(db: Session, skip: int = 0, limit: int = 100) -> List[TaskOut]:
         )
         .join(User, Task.user_id == User.id)
         .order_by(
+            Task.created_at.desc(),
+        )
+        .order_by(
             # Custom ordering for priority: high -> medium -> low
             case(
                 (Task.priority == "high", 1),
